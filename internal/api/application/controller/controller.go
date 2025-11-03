@@ -14,23 +14,24 @@ func NewController(svc service.IService) *Controller {
 	}
 }
 
-func (ctrl *Controller) Create(id string) error {
+func (ctrl *Controller) Create(id string) (int32, error) {
 	cnt, err := ctrl.svc.GetCount(id)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	totalDuration := 0.0
+	entityIdx := 0
 	for idx := range cnt {
 		chunk, err := ctrl.svc.GetAudioChunk(id, idx)
 		if err != nil {
 			continue
 		}
-		duration, err := ctrl.svc.CreateText(id, idx, chunk, totalDuration)
+		duration, err := ctrl.svc.CreateText(id, idx, &entityIdx, chunk, totalDuration)
 		if err != nil {
 			continue
 		}
 		totalDuration += duration
 	}
-
-	return nil
+	ctrl.svc.CompleteConversion(id, entityIdx)
+	return int32(entityIdx), nil
 }

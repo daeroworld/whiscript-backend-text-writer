@@ -6,5 +6,6 @@ type IService interface {
 	GetCount(id string) (int32, error)
 
 	//text
-	CreateText(Id string, idx int32, audioChunk []byte, totalDuration float64) (duration float64, err error)
+	CreateText(Id string, idx int32, entityIdx *int, audioChunk []byte, totalDuration float64) (duration float64, err error)
+	CompleteConversion(Id string, count int)
 }

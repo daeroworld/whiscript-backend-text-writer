@@ -44,7 +44,7 @@ func (c *MonoContainer) SetRouter(router any) {
 func (c *MonoContainer) DefineDatabase(databaseWrappers ...any) error {
 	c.PostgresqlWrapper = database.ConnectPostgresqlDatabase(c.Variable.Database)
 	//ctnrMysqlWrapper := databaseWrappers[0].(*database.MysqlWrapper)
-	err := c.PostgresqlWrapper.Driver.AutoMigrate(&sharedModel.Text{})
+	err := c.PostgresqlWrapper.Driver.AutoMigrate(&sharedModel.Text{}, &sharedModel.TextConversion{})
 	if err != nil {
 		return err
 	}
@@ -74,9 +74,9 @@ func (c *MonoContainer) DefineGrpc() error {
 
 func (c *MonoContainer) InitDependency(db interface{}) error {
 	voiceClnt := voice.NewVoiceReaderClient("localhost", 25012)
-	repo := postgresql.NewTextRepository(c.PostgresqlWrapper)
-
-	svc := service.NewService(voiceClnt, repo)
+	textRepo := postgresql.NewTextRepository(c.PostgresqlWrapper)
+	conversionRepo := postgresql.NewConversionRepository(c.PostgresqlWrapper)
+	svc := service.NewService(voiceClnt, textRepo, conversionRepo)
 	c.ctrl = controller.NewController(svc)
 	//c.Handler = handler.NewHttpHandler(c.ctrl)
 	c.GRPCHandler = handler.NewGRPCHandler(c.ctrl)

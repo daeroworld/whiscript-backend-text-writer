@@ -20,9 +20,10 @@ func NewGRPCHandler(ctrl controller.IController) *GRPCHandler {
 func (hdlr *GRPCHandler) Generate(ctx context.Context, req *pb.TextGenerateRequest) (*pb.TextGenerateResponse, error) {
 	log.Printf("Generate called with ID: %s", req.Id)
 
-	hdlr.ctrl.Create(req.GetId())
+	cnt, err := hdlr.ctrl.Create(req.GetId())
 
 	return &pb.TextGenerateResponse{
-		Id: req.GetId(), // return the same id or some generated value
-	}, nil
+		Id:    req.GetId(), // return the same id or some generated value
+		Count: cnt,
+	}, err
 }

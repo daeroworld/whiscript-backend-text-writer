@@ -6,5 +6,5 @@ import (
 
 type IController interface {
 	api.IController
-	Create(id string) error
+	Create(id string) (int32, error)
 }
