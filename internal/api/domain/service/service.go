@@ -51,11 +51,18 @@ func (svc *Service) GetAudioChunk(id string, idx int32) ([]byte, error) {
 
 func (svc *Service) CreateText(id string, voiceIdx int32, entityIdx *int, audioChunk []byte, totalDuration float64) (float64, error) {
 	duration, err := svc.getWavDuration(audioChunk)
+
 	if err != nil {
 		return 0, err
 	}
 	if duration > 0 {
-		svc.createSpeechText(id, voiceIdx, entityIdx, totalDuration, duration, audioChunk)
+		dir, err := svc.createSpeechText(id, voiceIdx, entityIdx, totalDuration, duration, audioChunk)
+		if err != nil {
+			return 0, err
+		}
+		go func(dir string) {
+			svc.removeAll(dir)
+		}(dir)
 		return duration, nil
 	}
 	svc.calculateSlienceDuration(&duration, audioChunk)
@@ -63,10 +70,10 @@ func (svc *Service) CreateText(id string, voiceIdx int32, entityIdx *int, audioC
 	return duration, nil
 }
 
-func (svc *Service) createSpeechText(id string, speechIndex int32, entityIdx *int, totalDuration, duration float64, chunk []byte) error {
+func (svc *Service) createSpeechText(id string, speechIndex int32, entityIdx *int, totalDuration, duration float64, chunk []byte) (string, error) {
 	filePath, err := svc.writeTempAudio(id, chunk)
 	if err != nil {
-		return err
+		return "", err
 	}
 	jsonPath, err := svc.runWhisper(filePath, chunk)
 	segments, err := svc.loadWhisperJson(jsonPath)
@@ -77,7 +84,8 @@ func (svc *Service) createSpeechText(id string, speechIndex int32, entityIdx *in
 		*entityIdx = *entityIdx + 1
 		svc.textRepo.Save(sharedModel.CreateText(id, int(speechIndex), textIndex, *entityIdx, StartFromTotal, EndFromTotal, seg.Text))
 	}
-	return nil
+
+	return filepath.Dir(filePath), nil
 }
 
 func (svc *Service) createSilenceText(id string, speechIndex int32, entityIdx *int, totalDuration float64, duration *float64, chunk []byte) error {
@@ -225,6 +233,14 @@ func (svc *Service) sliceAudio(filePath string, seg model.WhisperSegment) ([]byt
 
 	// Return file data as []byte
 	return os.ReadFile(out)
+}
+
+func (svc *Service) removeAll(dir string) error {
+	if err := os.RemoveAll(dir); err != nil {
+		// we already have the data, so return data + error
+		return err
+	}
+	return nil
 }
 
 func (svc *Service) CompleteConversion(id string, count int) {
