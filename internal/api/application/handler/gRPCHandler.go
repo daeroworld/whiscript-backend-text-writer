@@ -2,7 +2,6 @@ package handler
 
 import (
 	"context"
-	"log"
 	"text/writer/internal/api/application/controller"
 
 	pb "github.com/daeroworld/shared/proto/text"
@@ -19,7 +18,6 @@ func NewGRPCHandler(ctrl controller.IController) *GRPCHandler {
 }
 
 func (hdlr *GRPCHandler) Generate(ctx context.Context, req *pb.TextGenerateRequest) (*pb.TextGenerateResponse, error) {
-	log.Printf("Generate called with ID: %s", req.Id)
 
 	cnt, err := hdlr.ctrl.Create(req.GetId())
 
