@@ -22,3 +22,10 @@ func (repo *TextRepository) Save(f *sharedModel.Text) (*sharedModel.Text, error)
 	}
 	return f, nil
 }
+
+func (repo *TextRepository) UpdateContent(id string, content string) error {
+	return repo.postgresql.Driver.
+		Model(&sharedModel.Text{}).
+		Where("id = ?", id).
+		Update("edit_content", content).Error
+}

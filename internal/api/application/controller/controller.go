@@ -35,3 +35,7 @@ func (ctrl *Controller) Create(id string) (int32, error) {
 	ctrl.svc.CompleteConversion(id, entityIdx)
 	return int32(entityIdx), nil
 }
+
+func (ctrl *Controller) UpdateContent(id, content string) error {
+	return ctrl.svc.UpdateContent(id, content)
+}

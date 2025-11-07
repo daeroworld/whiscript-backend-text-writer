@@ -247,4 +247,6 @@ func (svc *Service) CompleteConversion(id string, count int) {
 	svc.conversionRepo.Save(sharedModel.CreateTextConversion(id, count))
 }
 
-
+func (svc *Service) UpdateContent(id string, content string) error {
+	return svc.textRepo.UpdateContent(id, content)
+}
