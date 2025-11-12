@@ -20,12 +20,12 @@ import (
 )
 
 type Service struct {
-	voiceClnt      *voice.VoiceReaderClient
-	textRepo       *postgresql.TextRepository
+	voiceClnt      voice.IVoiceReader
+	textRepo       postgresql.ITextRepository
 	conversionRepo repository.IRepository[sharedModel.TextConversion]
 }
 
-func NewService(voiceClnt *voice.VoiceReaderClient, textRepo *postgresql.TextRepository, conversionRepo repository.IRepository[sharedModel.TextConversion]) *Service {
+func NewService(voiceClnt voice.IVoiceReader, textRepo postgresql.ITextRepository, conversionRepo repository.IRepository[sharedModel.TextConversion]) *Service {
 	return &Service{
 		voiceClnt:      voiceClnt,
 		textRepo:       textRepo,
