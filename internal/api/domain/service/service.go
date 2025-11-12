@@ -49,28 +49,7 @@ func (svc *Service) GetAudioChunk(id string, idx int32) ([]byte, error) {
 	return chunkRes.GetChunk(), nil
 }
 
-func (svc *Service) CreateText(id string, voiceIdx int32, entityIdx *int, audioChunk []byte, totalDuration float64) (float64, error) {
-	duration, err := svc.getWavDuration(audioChunk)
-
-	if err != nil {
-		return 0, err
-	}
-	if duration > 0 {
-		dir, err := svc.createSpeechText(id, voiceIdx, entityIdx, totalDuration, duration, audioChunk)
-		if err != nil {
-			return 0, err
-		}
-		go func(dir string) {
-			svc.removeAll(dir)
-		}(dir)
-		return duration, nil
-	}
-	svc.calculateSlienceDuration(&duration, audioChunk)
-
-	return duration, nil
-}
-
-func (svc *Service) createSpeechText(id string, speechIndex int32, entityIdx *int, totalDuration, duration float64, chunk []byte) (string, error) {
+func (svc *Service) CreateText(id string, chunkIndex int32, entityIdx int, totalDuration, duration float64, chunk []byte) (string, error) {
 	filePath, err := svc.writeTempAudio(id, chunk)
 	if err != nil {
 		return "", err
@@ -81,33 +60,19 @@ func (svc *Service) createSpeechText(id string, speechIndex int32, entityIdx *in
 	for textIndex, seg := range segments {
 		StartFromTotal := totalDuration + seg.Start
 		EndFromTotal := totalDuration + seg.End
-		*entityIdx = *entityIdx + 1
-		svc.textRepo.Save(sharedModel.CreateText(id, int(speechIndex), textIndex, *entityIdx, StartFromTotal, EndFromTotal, seg.Text))
+
+		svc.textRepo.Save(sharedModel.CreateText(id, int(chunkIndex), textIndex, entityIdx, StartFromTotal, EndFromTotal, seg.Text))
 	}
 
 	return filepath.Dir(filePath), nil
 }
 
-func (svc *Service) createSilenceText(id string, speechIndex int32, entityIdx *int, totalDuration float64, duration *float64, chunk []byte) error {
-	BytesToFloat64 := func(b []byte) float64 {
-		bits := binary.LittleEndian.Uint64(b)
-		return math.Float64frombits(bits)
-	}
-	*duration = BytesToFloat64(chunk)
-	StartFromTotal := totalDuration
-	EndFromTotal := totalDuration + *duration
-	*entityIdx = *entityIdx + 1
-	svc.textRepo.Save(sharedModel.CreateText(id, int(speechIndex), *entityIdx, 0, StartFromTotal, EndFromTotal, "."))
-	return nil
-}
-
-func (svc *Service) calculateSlienceDuration(duration *float64, chunk []byte) error {
+func (svc *Service) CalculateSlienceDuration(chunk []byte) float64 {
 	bits := binary.LittleEndian.Uint64(chunk)
-	*duration = math.Float64frombits(bits)
-	return nil
+	return math.Float64frombits(bits)
 }
 
-func (svc *Service) getWavDuration(audio []byte) (float64, error) {
+func (svc *Service) GetWavDuration(audio []byte) (float64, error) {
 
 	r := bytes.NewReader(audio)
 
@@ -235,7 +200,7 @@ func (svc *Service) sliceAudio(filePath string, seg model.WhisperSegment) ([]byt
 	return os.ReadFile(out)
 }
 
-func (svc *Service) removeAll(dir string) error {
+func (svc *Service) RemoveAll(dir string) error {
 	if err := os.RemoveAll(dir); err != nil {
 		// we already have the data, so return data + error
 		return err

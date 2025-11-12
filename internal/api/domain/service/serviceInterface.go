@@ -5,8 +5,11 @@ type IService interface {
 	GetAudioChunk(id string, idx int32) ([]byte, error)
 	GetCount(id string) (int32, error)
 
-	//text
-	CreateText(Id string, idx int32, entityIdx *int, audioChunk []byte, totalDuration float64) (duration float64, err error)
+	CreateText(id string, speechIndex int32, entityIdx int, totalDuration, duration float64, chunk []byte) (string, error)
+	CalculateSlienceDuration(chunk []byte) float64
+	GetWavDuration(audio []byte) (float64, error)
+	RemoveAll(dir string) error
+
 	CompleteConversion(Id string, count int)
 	UpdateContent(id string, content string) error
 }
