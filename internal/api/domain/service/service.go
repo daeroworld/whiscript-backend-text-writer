@@ -58,15 +58,19 @@ func (svc *Service) CreateText(id string, chunkIndex int32, entityIdx int, total
 	}
 	jsonPath, err := svc.run(filePath)
 	segments, err := svc.load(jsonPath)
+	createdCnt := 0
+	for sentenceIndex, seg := range segments {
 
-	for textIndex, seg := range segments {
-		StartFromTotal := totalDuration + seg.Start
-		EndFromTotal := totalDuration + seg.End
+		for wordIdx, word := range seg.Words {
+			StartFromTotal := totalDuration + word.Start
+			EndFromTotal := totalDuration + word.End
+			svc.textRepo.Save(sharedModel.CreateText(id, int(chunkIndex), textIndex, entityIdx, StartFromTotal, EndFromTotal, seg.Text))
+			createdCnt++
+		}
 
-		svc.textRepo.Save(sharedModel.CreateText(id, int(chunkIndex), textIndex, entityIdx, StartFromTotal, EndFromTotal, seg.Text))
 	}
 
-	return filepath.Dir(filePath), nil
+	return filepath.Dir(filePath), createdCnt, nil
 }
 
 func (svc *Service) CalculateSlienceDuration(chunk []byte) float64 {
