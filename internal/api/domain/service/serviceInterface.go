@@ -1,7 +1,9 @@
 package service
 
+import sharedModel "github.com/daeroworld/shared/model"
+
 type IService interface {
-	Init(id string)
+	Init(filename string) (*sharedModel.TextConversion, error)
 	//voice
 	GetAudioChunk(id string, idx int32) ([]byte, error)
 	GetChunkCount(id string) (int32, error)

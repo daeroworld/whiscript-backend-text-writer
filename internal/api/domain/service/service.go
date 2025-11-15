@@ -31,8 +31,8 @@ func NewService(whisperBiz business.IBusiness, voiceClnt voice.IVoiceReader, tex
 	}
 }
 
-func (svc *Service) Init(filename string) {
-	svc.conversionRepo.Create(sharedModel.CreateTextConversion(filename, 0))
+func (svc *Service) Init(filename string) (*sharedModel.TextConversion, error) {
+	return svc.conversionRepo.Create(sharedModel.CreateTextConversion(filename, 0))
 }
 
 func (svc *Service) GetChunkCount(id string) (int32, error) {
