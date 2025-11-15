@@ -63,7 +63,7 @@ func (ctrl *Controller) Create(id string) (int32, error) {
 		totalDuration += duration
 		entityIdx++
 	}
-	ctrl.svc.CompleteConversion(id, entityIdx)
+	ctrl.svc.CompleteConversion(tcv, entityIdx)
 	return int32(entityIdx), nil
 }
 

@@ -175,8 +175,9 @@ func (svc *Service) RemoveAll(dir string) error {
 	return nil
 }
 
-func (svc *Service) CompleteConversion(filename string, count int) {
-	svc.conversionRepo.Upsert(sharedModel.CreateTextConversion(filename, count))
+func (svc *Service) CompleteConversion(tc *sharedModel.TextConversion, count int) {
+	tc.Count = count
+	svc.conversionRepo.Upsert(tc)
 }
 
 func (svc *Service) UpdateContent(id string, content string) error {
