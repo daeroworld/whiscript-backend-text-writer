@@ -51,10 +51,10 @@ func (svc *Service) GetAudioChunk(id string, idx int32) ([]byte, error) {
 	return chunkRes.GetChunk(), nil
 }
 
-func (svc *Service) CreateText(id string, chunkIndex int32, entityIdx int, totalDuration, duration float64, chunk []byte) (string, error) {
+func (svc *Service) CreateText(id uint, chunkIndex int, entityIdx int, totalDuration, duration float64, chunk []byte) (string, int, error) {
 	filePath, err := svc.writeTempAudio(id, chunk)
 	if err != nil {
-		return "", err
+		return "", 0, err
 	}
 	jsonPath, err := svc.run(filePath)
 	segments, err := svc.load(jsonPath)
@@ -64,7 +64,7 @@ func (svc *Service) CreateText(id string, chunkIndex int32, entityIdx int, total
 		for wordIdx, word := range seg.Words {
 			StartFromTotal := totalDuration + word.Start
 			EndFromTotal := totalDuration + word.End
-			svc.textRepo.Save(sharedModel.CreateText(id, int(chunkIndex), textIndex, entityIdx, StartFromTotal, EndFromTotal, seg.Text))
+			svc.textRepo.Save(sharedModel.CreateText(id, chunkIndex, sentenceIndex, wordIdx, StartFromTotal, EndFromTotal, word.Word))
 			createdCnt++
 		}
 
@@ -139,14 +139,14 @@ func (svc *Service) GetWavDuration(audio []byte) (float64, error) {
 	}
 }
 
-func (svc *Service) writeTempAudio(id string, audio []byte) (string, error) {
+func (svc *Service) writeTempAudio(id uint, audio []byte) (string, error) {
 	tempDir, err := os.MkdirTemp("", "audio")
 	if err != nil {
 		return "", err
 	}
 
-	// Generate filename using ID
-	filePath := filepath.Join(tempDir, id+".wav")
+	// Generate filename using Id
+	filePath := filepath.Join(tempDir, string(id)+".wav")
 
 	// Create file
 	f, err := os.Create(filePath)
