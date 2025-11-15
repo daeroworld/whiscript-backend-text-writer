@@ -41,7 +41,7 @@ func (ctrl *Controller) Create(id string) (int32, error) {
 	}
 
 	totalDuration := 0.0
-	entityIdx := 0
+	entityCount := 0
 	for chunkIdx := range cnt {
 		chunk, err := ctrl.svc.GetAudioChunk(id, chunkIdx)
 		if err != nil {
@@ -56,15 +56,15 @@ func (ctrl *Controller) Create(id string) (int32, error) {
 			totalDuration += duration
 			continue
 		}
-		err = handleSpeech(id, chunkIdx, entityIdx, totalDuration, duration, chunk)
+		err = handleSpeech(id, chunkIdx, entityCount, totalDuration, duration, chunk)
 		if err != nil {
 			continue
 		}
 		totalDuration += duration
-		entityIdx++
+		entityCount += cnt
 	}
-	ctrl.svc.CompleteConversion(tcv, entityIdx)
-	return int32(entityIdx), nil
+	ctrl.svc.CompleteConversion(tcv, entityCount)
+	return int32(entityCount), nil
 }
 
 func (ctrl *Controller) UpdateContent(id, content string) error {
