@@ -36,7 +36,7 @@ func (wb *WhisperBusiness) Load(filePath string) ([]model.Segment, error) {
 	if err != nil {
 		return nil, err
 	}
-	var w model.WhisperJson
+	var w model.Json
 	err = json.Unmarshal(b, &w)
 	return w.Segments, err
 }

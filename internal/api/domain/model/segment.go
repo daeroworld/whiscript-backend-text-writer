@@ -7,6 +7,6 @@ type Segment struct {
 	Text  string  `json:"text"`
 }
 
-type WhisperJson struct {
+type Json struct {
 	Segments []Segment `json:"segments"`
 }
