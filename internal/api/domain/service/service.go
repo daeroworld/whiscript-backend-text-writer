@@ -3,14 +3,11 @@ package service
 import (
 	"bytes"
 	"encoding/binary"
-	"encoding/json"
 	"errors"
-	"fmt"
 	"math"
 	"os"
-	"os/exec"
 	"path/filepath"
-	"strings"
+	"text/writer/internal/api/domain/business"
 	"text/writer/internal/api/domain/model"
 	"text/writer/internal/api/infrastructure/client/voice"
 	"text/writer/internal/api/infrastructure/repository"
@@ -20,13 +17,15 @@ import (
 )
 
 type Service struct {
+	biz            business.IBusiness
 	voiceClnt      voice.IVoiceReader
 	textRepo       postgresql.ITextRepository
 	conversionRepo repository.IRepository[sharedModel.TextConversion]
 }
 
-func NewService(voiceClnt voice.IVoiceReader, textRepo postgresql.ITextRepository, conversionRepo repository.IRepository[sharedModel.TextConversion]) *Service {
+func NewService(whisperBiz business.IBusiness, voiceClnt voice.IVoiceReader, textRepo postgresql.ITextRepository, conversionRepo repository.IRepository[sharedModel.TextConversion]) *Service {
 	return &Service{
+		biz:            whisperBiz,
 		voiceClnt:      voiceClnt,
 		textRepo:       textRepo,
 		conversionRepo: conversionRepo,
@@ -54,8 +53,8 @@ func (svc *Service) CreateText(id string, chunkIndex int32, entityIdx int, total
 	if err != nil {
 		return "", err
 	}
-	jsonPath, err := svc.runWhisper(filePath, chunk)
-	segments, err := svc.loadWhisperJson(jsonPath)
+	jsonPath, err := svc.run(filePath)
+	segments, err := svc.load(jsonPath)
 
 	for textIndex, seg := range segments {
 		StartFromTotal := totalDuration + seg.Start
@@ -157,47 +156,12 @@ func (svc *Service) writeTempAudio(id string, audio []byte) (string, error) {
 	return filePath, nil
 }
 
-func (svc *Service) runWhisper(filename string, chunk []byte) (string, error) {
-	base := strings.TrimSuffix(filename, filepath.Ext(filename))
-	jsonOut := base + ".json"
-	dir := filepath.Dir(filename)
-	file := filepath.Base(filename)
-	cmd := exec.Command("whisper", file, "--model", "medium", "--output_format", "json", "--language", "Korean")
-	cmd.Dir = dir // <-- IMPORTANT
-
-	out, err := cmd.CombinedOutput()
-	fmt.Println(string(out))
-
-	return jsonOut, err
+func (svc *Service) run(filename string) (string, error) {
+	return svc.biz.Run(filename)
 }
 
-func (svc *Service) loadWhisperJson(path string) ([]model.WhisperSegment, error) {
-	b, err := os.ReadFile(path)
-	if err != nil {
-		return nil, err
-	}
-	var w model.WhisperJson
-	err = json.Unmarshal(b, &w)
-	return w.Segments, err
-}
-
-func (svc *Service) sliceAudio(filePath string, seg model.WhisperSegment) ([]byte, error) {
-	dir := filepath.Dir(filePath)
-	out := filepath.Join(dir, fmt.Sprintf("chunk_%03d.wav", seg.ID))
-	cmd := exec.Command("ffmpeg",
-		"-y",
-		"-i", filePath,
-		"-ss", fmt.Sprintf("%.3f", seg.Start),
-		"-to", fmt.Sprintf("%.3f", seg.End),
-		"-c", "copy",
-		out,
-	)
-	if err := cmd.Run(); err != nil {
-		return nil, err
-	}
-
-	// Return file data as []byte
-	return os.ReadFile(out)
+func (svc *Service) load(path string) ([]model.Segment, error) {
+	return svc.biz.Load(path)
 }
 
 func (svc *Service) RemoveAll(dir string) error {

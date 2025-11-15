@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"text/writer/internal/api/application/controller"
 	"text/writer/internal/api/application/handler"
+	"text/writer/internal/api/domain/business"
 	"text/writer/internal/api/domain/service"
 	"text/writer/internal/api/infrastructure/client/voice"
 	"text/writer/internal/api/infrastructure/repository/postgresql"
@@ -73,10 +74,11 @@ func (c *MonoContainer) DefineGrpc() error {
 }
 
 func (c *MonoContainer) InitDependency(db interface{}) error {
+	whisperBiz := business.NewWhisperBusiness()
 	voiceClnt := voice.NewVoiceReaderClient("localhost", 25012)
 	textRepo := postgresql.NewTextRepository(c.PostgresqlWrapper)
 	conversionRepo := postgresql.NewConversionRepository(c.PostgresqlWrapper)
-	svc := service.NewService(voiceClnt, textRepo, conversionRepo)
+	svc := service.NewService(whisperBiz, voiceClnt, textRepo, conversionRepo)
 	c.ctrl = controller.NewController(svc)
 	//c.Handler = handler.NewHttpHandler(c.ctrl)
 	c.GRPCHandler = handler.NewGRPCHandler(c.ctrl)
