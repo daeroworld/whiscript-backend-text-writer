@@ -16,7 +16,7 @@ func NewTextRepository(postgresql *database.PostgresqlWrapper) *TextRepository {
 	}
 }
 
-func (repo *TextRepository) Save(f *sharedModel.Text) (*sharedModel.Text, error) {
+func (repo *TextRepository) Create(f *sharedModel.Text) (*sharedModel.Text, error) {
 	if err := repo.postgresql.Driver.Create(f).Error; err != nil {
 		return nil, err
 	}

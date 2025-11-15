@@ -5,6 +5,6 @@ import (
 )
 
 type ITextRepository interface {
-	Save(f *sharedModel.Text) (*sharedModel.Text, error)
+	Create(f *sharedModel.Text) (*sharedModel.Text, error)
 	UpdateContent(id string, content string) error
 }

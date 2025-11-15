@@ -64,7 +64,7 @@ func (svc *Service) CreateText(id uint, chunkIndex int, entityIdx int, totalDura
 		for wordIdx, word := range seg.Words {
 			StartFromTotal := totalDuration + word.Start
 			EndFromTotal := totalDuration + word.End
-			svc.textRepo.Save(sharedModel.CreateText(id, chunkIndex, sentenceIndex, wordIdx, StartFromTotal, EndFromTotal, word.Word))
+			svc.textRepo.Create(sharedModel.CreateText(id, chunkIndex, sentenceIndex, wordIdx, StartFromTotal, EndFromTotal, word.Word))
 			createdCnt++
 		}
 
