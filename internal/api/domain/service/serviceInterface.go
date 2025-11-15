@@ -1,9 +1,10 @@
 package service
 
 type IService interface {
+	Init(id string)
 	//voice
 	GetAudioChunk(id string, idx int32) ([]byte, error)
-	GetCount(id string) (int32, error)
+	GetChunkCount(id string) (int32, error)
 
 	CreateText(id string, speechIndex int32, entityIdx int, totalDuration, duration float64, chunk []byte) (string, error)
 	CalculateSlienceDuration(chunk []byte) float64

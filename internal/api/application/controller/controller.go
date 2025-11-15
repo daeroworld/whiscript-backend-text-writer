@@ -15,8 +15,9 @@ func NewController(svc service.IService) *Controller {
 }
 
 func (ctrl *Controller) Create(id string) (int32, error) {
+	ctrl.svc.Init(id)
 
-	cnt, err := ctrl.svc.GetCount(id)
+	cnt, err := ctrl.svc.GetChunkCount(id)
 	if err != nil {
 		return 0, err
 	}

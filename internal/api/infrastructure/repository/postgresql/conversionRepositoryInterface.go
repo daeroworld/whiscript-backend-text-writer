@@ -8,4 +8,5 @@ import (
 
 type IConversionRepository interface {
 	repository.IRepository[sharedModel.TextConversion]
+	Create(f *sharedModel.TextConversion) (*sharedModel.TextConversion, error)
 }

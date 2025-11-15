@@ -10,7 +10,6 @@ import (
 	"text/writer/internal/api/domain/business"
 	"text/writer/internal/api/domain/model"
 	"text/writer/internal/api/infrastructure/client/voice"
-	"text/writer/internal/api/infrastructure/repository"
 	"text/writer/internal/api/infrastructure/repository/postgresql"
 
 	sharedModel "github.com/daeroworld/shared/model"
@@ -20,10 +19,10 @@ type Service struct {
 	biz            business.IBusiness
 	voiceClnt      voice.IVoiceReader
 	textRepo       postgresql.ITextRepository
-	conversionRepo repository.IRepository[sharedModel.TextConversion]
+	conversionRepo postgresql.IConversionRepository
 }
 
-func NewService(whisperBiz business.IBusiness, voiceClnt voice.IVoiceReader, textRepo postgresql.ITextRepository, conversionRepo repository.IRepository[sharedModel.TextConversion]) *Service {
+func NewService(whisperBiz business.IBusiness, voiceClnt voice.IVoiceReader, textRepo postgresql.ITextRepository, conversionRepo postgresql.IConversionRepository) *Service {
 	return &Service{
 		biz:            whisperBiz,
 		voiceClnt:      voiceClnt,
@@ -32,7 +31,11 @@ func NewService(whisperBiz business.IBusiness, voiceClnt voice.IVoiceReader, tex
 	}
 }
 
-func (svc *Service) GetCount(id string) (int32, error) {
+func (svc *Service) Init(filename string) {
+	svc.conversionRepo.Create(sharedModel.CreateTextConversion(filename, 0))
+}
+
+func (svc *Service) GetChunkCount(id string) (int32, error) {
 	res, err := svc.voiceClnt.Count(id)
 	if err != nil {
 		return 0, err
@@ -172,8 +175,8 @@ func (svc *Service) RemoveAll(dir string) error {
 	return nil
 }
 
-func (svc *Service) CompleteConversion(id string, count int) {
-	svc.conversionRepo.Save(sharedModel.CreateTextConversion(id, count))
+func (svc *Service) CompleteConversion(filename string, count int) {
+	svc.conversionRepo.Upsert(sharedModel.CreateTextConversion(filename, count))
 }
 
 func (svc *Service) UpdateContent(id string, content string) error {
