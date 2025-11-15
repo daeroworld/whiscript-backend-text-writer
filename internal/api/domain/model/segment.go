@@ -1,7 +1,7 @@
 package model
 
 type Segment struct {
-	ID    int     `json:"id"`
+	Id    int     `json:"id"`
 	Start float64 `json:"start"`
 	End   float64 `json:"end"`
 	Text  string  `json:"text"`
