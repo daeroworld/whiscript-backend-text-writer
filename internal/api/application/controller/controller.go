@@ -29,8 +29,8 @@ func (ctrl *Controller) Create(id string) (int32, error) {
 		return ctrl.svc.CalculateSlienceDuration(chunk), nil
 	}
 
-	handleSpeech := func(id uint, chunkIdx int, entityIdx int, totalDuration, duration float64, chunk []byte) (int, error) {
-		dir, count, err := ctrl.svc.CreateText(id, chunkIdx, entityIdx, totalDuration, duration, chunk)
+	handleSpeech := func(id uint, chunkIdx int, totalDuration, duration float64, chunk []byte) (int, error) {
+		dir, count, err := ctrl.svc.CreateText(id, chunkIdx, totalDuration, duration, chunk)
 		if err != nil {
 			return 0, err
 		}
@@ -56,7 +56,7 @@ func (ctrl *Controller) Create(id string) (int32, error) {
 			totalDuration += duration
 			continue
 		}
-		cnt, err := handleSpeech(tcv.Id, int(chunkIdx), entityCount, totalDuration, duration, chunk)
+cnt, err := handleSpeech(tcv.Id, chunkIdx, totalDuration, duration, chunk)
 		if err != nil {
 			continue
 		}

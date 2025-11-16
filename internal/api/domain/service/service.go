@@ -51,7 +51,7 @@ func (svc *Service) GetAudioChunk(id string, idx int32) ([]byte, error) {
 	return chunkRes.GetChunk(), nil
 }
 
-func (svc *Service) CreateText(id uint, chunkIndex int, entityIdx int, totalDuration, duration float64, chunk []byte) (string, int, error) {
+func (svc *Service) CreateText(id uint, chunkIndex int, totalDuration, duration float64, chunk []byte) (string, int, error) {
 	filePath, err := svc.writeTempAudio(id, chunk)
 	if err != nil {
 		return "", 0, err
