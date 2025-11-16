@@ -11,18 +11,25 @@ import (
 )
 
 type WhisperBusiness struct {
+	semaphore chan struct{}
 }
 
-func NewWhisperBusiness() *WhisperBusiness {
-	return &WhisperBusiness{}
+func NewWhisperBusiness(maxWorkers int) *WhisperBusiness {
+	return &WhisperBusiness{
+		semaphore: make(chan struct{}, maxWorkers),
+	}
 }
 
 func (wb *WhisperBusiness) Run(filename string) (string, error) {
+
+	wb.semaphore <- struct{}{}
+	defer func() { <-wb.semaphore }()
+
 	base := strings.TrimSuffix(filename, filepath.Ext(filename))
 	jsonOut := base + ".json"
 	dir := filepath.Dir(filename)
 	file := filepath.Base(filename)
-	cmd := exec.Command("whisper", file, "--model", "medium", "--output_format", "json", "--language", "Korean")
+	cmd := exec.Command("whisper", file, "--model", "medium", "--output_format", "json", "--language", "Korean", "--word_timestamps", "True")
 	cmd.Dir = dir // <-- IMPORTANT
 
 	out, err := cmd.CombinedOutput()

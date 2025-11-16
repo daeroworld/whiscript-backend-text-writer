@@ -74,7 +74,7 @@ func (c *MonoContainer) DefineGrpc() error {
 }
 
 func (c *MonoContainer) InitDependency(db interface{}) error {
-	whisperBiz := business.NewWhisperBusiness()
+	whisperBiz := business.NewWhisperBusiness(2)
 	voiceClnt := voice.NewVoiceReaderClient("localhost", 25012)
 	textRepo := postgresql.NewTextRepository(c.PostgresqlWrapper)
 	conversionRepo := postgresql.NewConversionRepository(c.PostgresqlWrapper)
