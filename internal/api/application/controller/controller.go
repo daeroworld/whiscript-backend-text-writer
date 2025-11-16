@@ -1,7 +1,10 @@
 package controller
 
 import (
+	"sync"
+	"sync/atomic"
 	"text/writer/internal/api/domain/service"
+	"time"
 )
 
 type Controller struct {
@@ -41,7 +44,9 @@ func (ctrl *Controller) Create(id string) (int32, error) {
 	}
 
 	totalDuration := 0.0
-	entityCount := 0
+	entityCount := int32(0)
+
+	wg := sync.WaitGroup{}
 	for chunkIdx := range cnt {
 		chunk, err := ctrl.svc.GetAudioChunk(id, chunkIdx)
 		if err != nil {
@@ -56,16 +61,24 @@ func (ctrl *Controller) Create(id string) (int32, error) {
 			totalDuration += duration
 			continue
 		}
-cnt, err := handleSpeech(tcv.Id, chunkIdx, totalDuration, duration, chunk)
-		if err != nil {
-			continue
-		}
+
+		wg.Add(1)
+		go func(chunkIdx int, totalDuration, duration float64, chunk []byte) {
+			defer wg.Done()
+			cnt, err := handleSpeech(tcv.Id, chunkIdx, totalDuration, duration, chunk)
+			if err == nil {
+				atomic.AddInt32(&entityCount, int32(cnt))
+			}
+		}(int(chunkIdx), totalDuration, duration, chunk)
 		totalDuration += duration
-		entityCount += cnt
+		time.Sleep(2 * time.Second)
 	}
-	ctrl.svc.CompleteConversion(tcv, entityCount)
-	return int32(entityCount), nil
+	wg.Wait()
+	ctrl.svc.CompleteConversion(tcv, int(entityCount))
+	return entityCount, nil
 }
+
+
 
 func (ctrl *Controller) UpdateContent(id, content string) error {
 	return ctrl.svc.UpdateContent(id, content)
