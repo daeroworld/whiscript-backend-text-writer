@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"text/writer/internal/api/domain/business"
+	indexBiz "text/writer/internal/api/domain/business/index"
 	"text/writer/internal/api/domain/model"
 	"text/writer/internal/api/infrastructure/client/voice"
 	"text/writer/internal/api/infrastructure/repository/postgresql"
@@ -16,14 +17,16 @@ import (
 )
 
 type Service struct {
+	idxBiz         indexBiz.IIndexBusiness
 	biz            business.IBusiness
 	voiceClnt      voice.IVoiceReader
 	textRepo       postgresql.ITextRepository
 	conversionRepo postgresql.IConversionRepository
 }
 
-func NewService(whisperBiz business.IBusiness, voiceClnt voice.IVoiceReader, textRepo postgresql.ITextRepository, conversionRepo postgresql.IConversionRepository) *Service {
+func NewService(idxBiz indexBiz.IIndexBusiness, whisperBiz business.IBusiness, voiceClnt voice.IVoiceReader, textRepo postgresql.ITextRepository, conversionRepo postgresql.IConversionRepository) *Service {
 	return &Service{
+		idxBiz:         idxBiz,
 		biz:            whisperBiz,
 		voiceClnt:      voiceClnt,
 		textRepo:       textRepo,
@@ -64,7 +67,7 @@ func (svc *Service) CreateText(id uint, chunkIndex int, totalDuration, duration 
 		for wordIdx, word := range seg.Words {
 			StartFromTotal := totalDuration + word.Start
 			EndFromTotal := totalDuration + word.End
-			svc.textRepo.Create(sharedModel.CreateText(id, chunkIndex, sentenceIndex, wordIdx, StartFromTotal, EndFromTotal, word.Word))
+			svc.textRepo.Create(sharedModel.CreateText(id, chunkIndex, svc.idxBiz.ConvertSentenceIdex(sentenceIndex), wordIdx, StartFromTotal, EndFromTotal, word.Word))
 			createdCnt++
 		}
 
