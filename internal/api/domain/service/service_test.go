@@ -9,6 +9,7 @@ import (
 	sharedModel "github.com/daeroworld/shared/model"
 	"github.com/daeroworld/shared/proto/voice"
 	pb "github.com/daeroworld/shared/proto/voice"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -24,7 +25,8 @@ func (m *MockIndexBiz) ConvertSentenceIdex(int) int {
 
 // GetIndexSpace implements index.IIndexBusiness.
 func (m *MockIndexBiz) GetIndexSpace() int {
-	panic("unimplemented")
+	args := m.Called()
+	return args.Int(0)
 }
 
 type MockWhisperBiz struct {
@@ -57,6 +59,18 @@ func (m *MockVoiceClient) Retrieve(id string, idx int32) (*pb.VoiceRetrieveRespo
 
 type MockTextRepo struct {
 	mock.Mock
+}
+
+// CreateSentence implements postgresql.ITextRepository.
+func (m *MockTextRepo) CreateSentence(t *sharedModel.Text, filename string) (*sharedModel.Text, error) {
+	args := m.Called(t, filename)
+	return args.Get(0).(*sharedModel.Text), args.Error(1)
+}
+
+// Update implements postgresql.ITextRepository.
+func (m *MockTextRepo) Update(t *sharedModel.Text) (*sharedModel.Text, error) {
+	args := m.Called(t)
+	return args.Get(0).(*sharedModel.Text), args.Error(1)
 }
 
 // Create implements postgresql.ITextRepository.
@@ -146,16 +160,34 @@ func TestGetChunkCount(t *testing.T) {
 	mockVoiceClnt.AssertExpectations(t)
 }
 
-func TestUpdateContent(t *testing.T) {
-	mockVoiceClnt = new(MockVoiceClient)
-	mockTextRepo = new(MockTextRepo)
-	mockConvRepo = new(MockConversionRepo)
+func TestPut(t *testing.T) {
+	mockRepo := new(MockTextRepo)
+	mockIdx := new(MockIndexBiz)
 
-	svc = service.NewService(mockIdxBiz, mockWhisperBiz, mockVoiceClnt, mockTextRepo, mockConvRepo)
+	svc = service.NewService(mockIdx, mockWhisperBiz, mockVoiceClnt, mockRepo, mockConvRepo)
 
-	mockTextRepo.On("UpdateContent", "id123", "new content").Return(nil)
+	id := uuid.New().String()
+	const filename = "zzvideo1.mp4"
+	const sentence = 1656
+	word := 1
+	start := 0.5
+	end := 2.0
+	content := "ccHello world"
 
-	err := svc.UpdateContent("id123", "new content")
+	text := sharedModel.CreateTextForUpsert(id, sentence, word, start, end, content)
+
+	// Expect GetIndexSpace to be called
+	mockIdx.On("GetIndexSpace").Return(1000)
+
+	// Expect Update to be called because sentence % indexSpace == 0
+	mockRepo.On("Update", text).Return(text, nil)
+
+	// Expect CreateSentence to be called
+	mockRepo.On("CreateSentence", text, filename).Return(text, nil)
+
+	// Call the method
+	generatedText, err := svc.Put(id, filename, sentence, word, start, end, content)
+
 	assert.NoError(t, err)
-	mockTextRepo.AssertExpectations(t)
+	assert.Equal(t, text, generatedText)
 }
