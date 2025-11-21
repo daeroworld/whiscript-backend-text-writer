@@ -5,7 +5,6 @@ import (
 	"text/writer/internal/api/application/controller"
 
 	pb "github.com/daeroworld/shared/proto/text"
-	"github.com/golang/protobuf/ptypes/empty"
 )
 
 type GRPCHandler struct {
@@ -27,6 +26,9 @@ func (hdlr *GRPCHandler) Generate(ctx context.Context, req *pb.TextGenerateReque
 	}, err
 }
 
-func (hdlr *GRPCHandler) UpdateContent(ctx context.Context, req *pb.TextUpdateRequest) (*empty.Empty, error) {
-	return nil, hdlr.ctrl.UpdateContent(req.GetId(), req.GetContent())
+func (hdlr *GRPCHandler) Put(ctx context.Context, req *pb.TextUpdateRequest) (*pb.TextUpdateResponse, error) {
+	id, err := hdlr.ctrl.Put(req.GetId(), req.GetFilename(), int(req.GetSentence()), int(req.GetWord()), req.GetStart(), req.GetEnd(), req.GetContent())
+	return &pb.TextUpdateResponse{
+		Id: id,
+	}, err
 }

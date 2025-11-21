@@ -15,5 +15,5 @@ type IService interface {
 
 	SortSentenceIndex(id uint) error
 	CompleteConversion(tc *sharedModel.TextConversion, count int)
-	UpdateContent(id string, content string) error
+	Put(id, filename string, sentence, word int, start, end float64, content string) (*sharedModel.Text, error)
 }

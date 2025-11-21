@@ -132,6 +132,7 @@ func (ctrl *Controller) CreateSync(id string) (int32, error) {
 	return int32(entityCount), nil
 }
 
-func (ctrl *Controller) UpdateContent(id, content string) error {
-	return ctrl.svc.UpdateContent(id, content)
+func (ctrl *Controller) Put(id, filename string, sentence, word int, start, end float64, content string) (string, error) {
+	put, err := ctrl.svc.Put(id, filename, sentence, word, start, end, content)
+	return put.Id.String(), err
 }

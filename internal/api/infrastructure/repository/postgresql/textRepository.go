@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	sharedModel "github.com/daeroworld/shared/model"
+	"gorm.io/gorm/clause"
 
 	"github.com/daeroworld/shared/database"
 )
@@ -23,6 +24,55 @@ func (repo *TextRepository) Create(f *sharedModel.Text) (*sharedModel.Text, erro
 		return nil, err
 	}
 	return f, nil
+}
+
+func (repo *TextRepository) Update(t *sharedModel.Text) (*sharedModel.Text, error) {
+	err := repo.postgresql.Driver.
+		Clauses(clause.OnConflict{
+			Columns: []clause.Column{{Name: "id"}},
+			DoUpdates: clause.Assignments(map[string]interface{}{
+				"sentence":     t.Sentence,
+				"word":         t.Word,
+				"start":        t.Start,
+				"end":          t.End,
+				"edit_content": t.EditContent,
+			}),
+		}).
+		Create(t).Error
+
+	if err != nil {
+		return nil, err
+	}
+	return t, nil
+}
+
+func (repo *TextRepository) CreateSentence(t *sharedModel.Text, filename string) (*sharedModel.Text, error) {
+	sql := `
+		INSERT INTO text (id, file_id, chunk, sentence, word, start, "end", content, edit_content, created_at)
+		SELECT ?, tc.id, ?, ?, ?, ?, ?, ?, ?, ?
+		FROM text_conversion tc
+		WHERE tc.filename = ?;
+	`
+
+	err := repo.postgresql.Driver.Exec(
+		sql,
+		t.Id,
+		t.Chunk,
+		t.Sentence,
+		t.Word,
+		t.Start,
+		t.End,
+		t.Content,
+		t.EditContent,
+		t.CreatedAt,
+		filename,
+	).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return t, nil
 }
 
 func (repo *TextRepository) UpdateContent(id string, content string) error {

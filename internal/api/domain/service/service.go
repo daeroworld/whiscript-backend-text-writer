@@ -192,6 +192,10 @@ func (svc *Service) CompleteConversion(tc *sharedModel.TextConversion, count int
 	svc.conversionRepo.Upsert(tc)
 }
 
-func (svc *Service) UpdateContent(id string, content string) error {
-	return svc.textRepo.UpdateContent(id, content)
+func (svc *Service) Put(id, filename string, sentence, word int, start, end float64, content string) (*sharedModel.Text, error) {
+	text := sharedModel.CreateTextForUpsert(id, sentence, word, start, end, content)
+	if sentence%svc.idxBiz.GetIndexSpace() == 0 {
+		return svc.textRepo.Update(text)
+	}
+	return svc.textRepo.CreateSentence(text, filename)
 }
