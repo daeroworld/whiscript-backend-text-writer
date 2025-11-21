@@ -7,6 +7,7 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"strconv"
 	"text/writer/internal/api/domain/business"
 	indexBiz "text/writer/internal/api/domain/business/index"
 	"text/writer/internal/api/domain/model"
@@ -149,7 +150,7 @@ func (svc *Service) writeTempAudio(id uint, audio []byte) (string, error) {
 	}
 
 	// Generate filename using Id
-	filePath := filepath.Join(tempDir, string(id)+".wav")
+	filePath := filepath.Join(tempDir, strconv.FormatUint(uint64(id), 10)+".wav")
 
 	// Create file
 	f, err := os.Create(filePath)
