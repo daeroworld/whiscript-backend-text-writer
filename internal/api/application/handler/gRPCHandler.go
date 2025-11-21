@@ -27,6 +27,6 @@ func (hdlr *GRPCHandler) Generate(ctx context.Context, req *pb.TextGenerateReque
 	}, err
 }
 
-func (hdlr *GRPCHandler) UpdateContent(ctx context.Context, req *pb.UpdateContentRequest) (*empty.Empty, error) {
+func (hdlr *GRPCHandler) UpdateContent(ctx context.Context, req *pb.TextUpdateRequest) (*empty.Empty, error) {
 	return nil, hdlr.ctrl.UpdateContent(req.GetId(), req.GetContent())
 }

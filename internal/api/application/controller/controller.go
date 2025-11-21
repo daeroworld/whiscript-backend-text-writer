@@ -74,6 +74,7 @@ func (ctrl *Controller) Create(id string) (int32, error) {
 		time.Sleep(2 * time.Second)
 	}
 	wg.Wait()
+	go ctrl.svc.SortSentenceIndex(tcv.Id)
 	ctrl.svc.CompleteConversion(tcv, int(entityCount))
 	return entityCount, nil
 }

@@ -13,6 +13,7 @@ type IService interface {
 	GetWavDuration(audio []byte) (float64, error)
 	RemoveAll(dir string) error
 
+	SortSentenceIndex(id uint) error
 	CompleteConversion(tc *sharedModel.TextConversion, count int)
 	UpdateContent(id string, content string) error
 }

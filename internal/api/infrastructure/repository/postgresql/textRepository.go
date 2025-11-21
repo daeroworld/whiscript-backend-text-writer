@@ -1,6 +1,8 @@
 package postgresql
 
 import (
+	"fmt"
+
 	sharedModel "github.com/daeroworld/shared/model"
 
 	"github.com/daeroworld/shared/database"
@@ -28,4 +30,22 @@ func (repo *TextRepository) UpdateContent(id string, content string) error {
 		Model(&sharedModel.Text{}).
 		Where("id = ?", id).
 		Update("edit_content", content).Error
+}
+
+func (repo *TextRepository) SortSentenceIndex(fileId uint, indexSpace int) error {
+	sql := fmt.Sprintf(`
+    WITH ordered AS (
+        SELECT
+            id,
+            ROW_NUMBER() OVER (PARTITION BY file_id ORDER BY chunk, sentence, word) AS rn
+        FROM text
+        WHERE file_id = ?
+    )
+    UPDATE text t
+    SET sentence = o.rn * %d
+    FROM ordered o
+    WHERE t.id = o.id;
+    `, indexSpace) // inject indexSpace here
+
+	return repo.postgresql.Driver.Exec(sql, fileId).Error
 }

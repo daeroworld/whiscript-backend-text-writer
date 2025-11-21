@@ -182,6 +182,10 @@ func (svc *Service) RemoveAll(dir string) error {
 	return nil
 }
 
+func (svc *Service) SortSentenceIndex(id uint) error {
+	return svc.textRepo.SortSentenceIndex(id, svc.idxBiz.GetIndexSpace())
+}
+
 func (svc *Service) CompleteConversion(tc *sharedModel.TextConversion, count int) {
 	tc.Count = count
 	svc.conversionRepo.Upsert(tc)
