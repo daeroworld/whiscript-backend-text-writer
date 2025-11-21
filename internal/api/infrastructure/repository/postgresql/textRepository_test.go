@@ -51,24 +51,37 @@ func createTestFile() *sharedModel.File {
 func TestSortSentenceIndex(t *testing.T) {
 
 	// insert sample texts out of order
-	const fileId = 5
+	const fileId = 77
 	texts := []*sharedModel.Text{
-		{FileId: fileId, Chunk: 1, Sentence: 2000, Word: 1, Content: "B"},
-		{FileId: fileId, Chunk: 0, Sentence: 1000, Word: 0, Content: "A"},
-		{FileId: fileId, Chunk: 0, Sentence: 2000, Word: 1, Content: "C"},
+		{FileId: fileId, Chunk: 1, Sentence: 1000, Word: 1, Content: "Hello"},
+		{FileId: fileId, Chunk: 1, Sentence: 1000, Word: 2, Content: "World"},
+		// Chunk 1, sentence 2000
+		{FileId: fileId, Chunk: 1, Sentence: 2000, Word: 1, Content: "Foo"},
+		// Chunk 2, sentence 3000, 3 words (duplicate sentence)
+		{FileId: fileId, Chunk: 2, Sentence: 3000, Word: 1, Content: "Bar"},
+		{FileId: fileId, Chunk: 2, Sentence: 3000, Word: 2, Content: "Baz"},
+		{FileId: fileId, Chunk: 2, Sentence: 3000, Word: 3, Content: "Qux"},
+		// Chunk 2, sentence 4000
+		{FileId: fileId, Chunk: 2, Sentence: 4000, Word: 1, Content: "End"},
 	}
-	for _, t := range texts {
-		repo.Create(t)
+	for _, text := range texts {
+		_, err := repo.Create(text)
+		assert.NoError(t, err)
 	}
 
 	err := repo.SortSentenceIndex(fileId, 1000)
 	assert.NoError(t, err)
 
 	var sorted []sharedModel.Text
-	db.Driver.Where("file_id = ?", fileId).Order("chunk, sentence, word").Find(&sorted)
+	err = db.Driver.Order("chunk, sentence, word").Where("file_id = ?", fileId).Find(&sorted).Error
+	assert.NoError(t, err)
 
-	// Check that sentence numbers are renumbered as 1000, 2000, 3000
-	assert.Equal(t, 1000, sorted[0].Sentence)
-	assert.Equal(t, 2000, sorted[1].Sentence)
-	assert.Equal(t, 3000, sorted[2].Sentence)
+	expectedSentences := []int{
+		1000, 1000, 2000, 3000, 3000,
+		3000, 4000,
+	}
+
+	for i, s := range sorted {
+		assert.Equal(t, expectedSentences[i], s.Sentence, "text at index %d", i)
+	}
 }
