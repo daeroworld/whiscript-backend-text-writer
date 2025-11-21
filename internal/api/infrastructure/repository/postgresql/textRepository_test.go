@@ -85,3 +85,47 @@ func TestSortSentenceIndex(t *testing.T) {
 		assert.Equal(t, expectedSentences[i], s.Sentence, "text at index %d", i)
 	}
 }
+
+func TestCreateSentence(t *testing.T) {
+	const filename = "vcvc.mp4"
+	// 1. Insert a TextConversion
+	tc := sharedModel.TextConversion{
+		Filename: filename,
+		Count:    10,
+	}
+	err := db.Driver.Create(&tc).Error
+	assert.NoError(t, err)
+
+	// 2. Create Text object (input to CreateSentence)
+	input := &sharedModel.Text{
+		Id:          uuid.New(),
+		Chunk:       1,
+		Sentence:    1000,
+		Word:        1,
+		Start:       0.5,
+		End:         2.0,
+		EditContent: "Hello world",
+		CreatedAt:   time.Now(),
+	}
+
+	// 3. Call CreateSentence
+	out, err := repo.CreateSentence(input, filename)
+	assert.NoError(t, err)
+	assert.NotNil(t, out)
+
+	// 4. Verify inserted row in DB
+	var saved sharedModel.Text
+	err = db.Driver.Where("id = ?", input.Id).First(&saved).Error
+	assert.NoError(t, err)
+
+	// 5. Validate fields
+	assert.Equal(t, input.Id, saved.Id)
+	assert.Equal(t, tc.Id, saved.FileId)
+	assert.Equal(t, input.Chunk, saved.Chunk)
+	assert.Equal(t, input.Sentence, saved.Sentence)
+	assert.Equal(t, input.Word, saved.Word)
+	assert.Equal(t, input.Start, saved.Start)
+	assert.Equal(t, input.End, saved.End)
+	assert.Equal(t, input.Content, saved.Content)
+	assert.Equal(t, input.EditContent, saved.EditContent)
+}
